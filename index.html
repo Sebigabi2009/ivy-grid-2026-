@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+<meta charset="UTF-8">
+<title>IVY GRID</title>
+
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+
+html, body {
+    width:100%;
+    height:100%;
+    overflow:hidden;
+    font-family: Arial, sans-serif;
+}
+
+/* FUNDAL SLIDESHOW */
+#background {
+    position: fixed;
+    inset: 0;
+    background-size: cover;
+    background-position: center;
+    transition: opacity 1.5s ease-in-out;
+    z-index: 0;
+}
+
+/* SLIDER – FUNDAL ÎNCHIS */
+.slider {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 80%;
+    max-width: 900px;
+    height: 500px;
+    border-radius: 18px;
+    overflow: hidden;
+    z-index: 2;
+
+    /* CHEIA */
+    background: rgba(0, 0, 0, 0.55);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+
+    box-shadow: 0 30px 70px rgba(0,0,0,0.9);
+}
+
+/* IMAGINI */
+.slides img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+
+    filter: brightness(1.2) contrast(1.15) saturate(1.15);
+    opacity: 0;
+    transition: opacity 0.6s ease-in-out;
+}
+
+.slides img.active {
+    opacity: 1;
+}
+
+/* BUTOANE */
+.prev, .next {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    background: rgba(0,0,0,0.6);
+    color: white;
+    border: none;
+    font-size: 32px;
+    padding: 12px 16px;
+    cursor: pointer;
+    border-radius: 50%;
+    z-index: 3;
+}
+
+.prev { left: 18px; }
+.next { right: 18px; }
+
+.prev:hover, .next:hover {
+    background: rgba(0,0,0,0.9);
+}
+
+/* TITLU */
+.title {
+    position: absolute;
+    top: 20px;
+    width: 100%;
+    text-align: center;
+    color: white;
+    font-size: 32px;
+    letter-spacing: 4px;
+    text-shadow: 0 0 20px black;
+    z-index: 4;
+}
+
+/* ARTIFICII */
+canvas {
+    position: fixed;
+    inset: 0;
+    z-index: 3;
+    pointer-events: none;
+}
+</style>
+</head>
+
+<body>
+
+<div id="background"></div>
+
+<div class="slider">
+    <div class="slides">
+        <img src="bg1.jpg" class="active">
+        <img src="bg2.jpg">
+        <img src="bg3.jpg">
+        <img src="bg4.jpg">
+        <img src="bg5.jpg">
+        <img src="bg6.jpg">
+        <img src="bg7.jpg">
+        <img src="bg8.jpg">
+        <img src="bg9.jpg">
+        <img src="bg10.jpg">
+        <img src="bg11.jpg">
+        <img src="bg12.jpg">
+    </div>
+    <button class="prev">&#10094;</button>
+    <button class="next">&#10095;</button>
+</div>
+
+<div class="title">
+    IVY GRID<br><br>
+    <span style="font-size:30px">VĂ UREAZĂ „LA MULȚI ANI”</span><br><br>
+    <span style="font-size:40px">2026</span>
+</div>
+
+<canvas id="canvas"></canvas>
+
+<script>
+/* FUNDAL */
+const bgImages = ["bg1.jpg","bg2.jpg","bg3.jpg","bg4.jpg","bg5.jpg"];
+let bgIndex = 0;
+const bg = document.getElementById("background");
+bg.style.backgroundImage = `url(${bgImages[0]})`;
+
+setInterval(() => {
+    bg.style.opacity = 0;
+    setTimeout(() => {
+        bgIndex = (bgIndex + 1) % bgImages.length;
+        bg.style.backgroundImage = `url(${bgImages[bgIndex]})`;
+        bg.style.opacity = 1;
+    }, 700);
+}, 5000);
+
+/* SLIDER */
+const slides = document.querySelectorAll(".slides img");
+let slideIndex = 0;
+
+function showSlide(i) {
+    slides.forEach(s => s.classList.remove("active"));
+    slides[i].classList.add("active");
+}
+
+document.querySelector(".next").onclick = () => {
+    slideIndex = (slideIndex + 1) % slides.length;
+    showSlide(slideIndex);
+};
+
+document.querySelector(".prev").onclick = () => {
+    slideIndex = (slideIndex - 1 + slides.length) % slides.length;
+    showSlide(slideIndex);
+};
+
+setInterval(() => {
+    slideIndex = (slideIndex + 1) % slides.length;
+    showSlide(slideIndex);
+}, 4500);
+
+/* ARTIFICII */
+const canvas = document.getElementById("canvas");
+const ctx = canvas.getContext("2d");
+
+function resize() {
+    canvas.width = innerWidth;
+    canvas.height = innerHeight;
+}
+resize();
+addEventListener("resize", resize);
+
+function rand(min, max) { return Math.random() * (max - min) + min; }
+
+class Particle {
+    constructor(x, y, color) {
+        const a = Math.random() * Math.PI * 2;
+        const s = rand(4, 10);
+        this.x = x; this.y = y;
+        this.vx = Math.cos(a) * s;
+        this.vy = Math.sin(a) * s;
+        this.alpha = 1;
+        this.size = rand(2, 3.5);
+        this.color = color;
+    }
+    update() {
+        this.vy += 0.06;
+        this.x += this.vx;
+        this.y += this.vy;
+        this.alpha -= 0.012;
+    }
+    draw() {
+        ctx.globalAlpha = this.alpha;
+        ctx.fillStyle = this.color;
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.globalAlpha = 1;
+    }
+}
+
+class Firework {
+    constructor(x, y) {
+        this.p = [];
+        const c = `hsl(${Math.random() * 360},100%,65%)`;
+        for (let i = 0; i < 220; i++) this.p.push(new Particle(x, y, c));
+    }
+    update() {
+        this.p.forEach(p => p.update());
+        this.p = this.p.filter(p => p.alpha > 0);
+    }
+    draw() { this.p.forEach(p => p.draw()); }
+}
+
+let fireworks = [];
+
+function animate() {
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    fireworks.forEach(f => { f.update(); f.draw(); });
+    fireworks = fireworks.filter(f => f.p.length);
+    requestAnimationFrame(animate);
+}
+animate();
+
+setInterval(() => {
+    for (let i = 0; i < 3; i++) {
+        fireworks.push(new Firework(
+            rand(150, canvas.width - 150),
+            rand(120, canvas.height / 2)
+        ));
+    }
+}, 900);
+</script>
+
+</body>
+</html>
